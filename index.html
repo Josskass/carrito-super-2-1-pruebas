@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compra del Súper</title>
+<link rel="icon" type="image/png" sizes="1024x1024" href="icono.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00c853">
+<style>
+  :root{--bg:#0f172a;--ink:#e2e8f0;--mut:#94a3b8;--acc:#22c55e;--line:#334155;--card:#111827;--danger:#ef4444}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto;background:var(--bg);color:var(--ink);padding:12px;overflow-x:hidden}
+  .wrap{max-width:760px;margin:auto}
+  .top{display:flex;gap:6px;align-items:center;margin:4px 0 8px;min-width:0}
+  .top h2{min-width:0;flex-shrink:1}
+  .top .ghost{white-space:nowrap;flex-shrink:0}
+  .top #btnSettings{padding:7px 9px;font-size:1.15rem}
+  .top h2{margin:0;color:var(--acc);font-size:1.25rem}
+  .ghost{background:#0b1220;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 10px;cursor:pointer}
+  .back{background:#0b1220;border:1px solid var(--line);color:#e5e7eb;border-radius:10px;padding:8px 10px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px}
+  .hidden{display:none !important}
+  input,button{font:inherit}
+  input{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:#0b1220;color:var(--ink)}
+  button.ok{background:var(--acc);color:#06210e;border:1px solid #16a34a;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;width:100%}
+  .row{display:grid;grid-template-columns:1fr;gap:10px;align-items:center}
+  @media (min-width:560px){
+    .row{grid-template-columns:1.2fr .8fr .8fr auto auto}
+    button.ok{width:auto}
+  }
+
+  .total-inline{display:flex;justify-content:flex-end;gap:8px;font-weight:800}
+  .total-badge{padding:2px 8px;border-radius:999px}
+
+  .budget-line{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-top:10px}
+  .money{position:relative;display:flex;align-items:center}
+  .money .prefix{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--mut);pointer-events:none}
+  .money input{padding-left:24px}
+  .over{justify-self:end;background:#7f1d1d;border:1px solid var(--danger);color:#fee2e2;padding:6px 10px;border-radius:999px;font-weight:700;white-space:nowrap}
+  .over b{color:#fff}
+  @media (max-width:559px){ .budget-line{grid-template-columns:1fr auto} .over{grid-column:1/-1; justify-self:end; margin-top:6px} }
+
+  table{width:100%;border-collapse:collapse;margin-top:8px;table-layout:fixed}
+  .table-wrap{max-width:100%;overflow-x:hidden}
+  .cart-table th,.cart-table td{padding:7px 3px;font-size:clamp(10px,2.9vw,14px);overflow-wrap:anywhere}
+  .cart-table th:first-child{width:31%}.cart-table th:nth-child(2){width:20%}.cart-table th:nth-child(3){width:12%}.cart-table th:nth-child(4){width:23%}.cart-table th:last-child{width:14%}
+  .cart-table .ghost{padding:6px 3px;min-width:26px}
+  .tap-number{border:0;background:transparent;color:var(--ink);padding:7px 0;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:4px;cursor:pointer;max-width:100%;font-size:inherit}
+  .pill{background:#0b1220;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px;cursor:pointer}
+  .small-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .small-row .name{min-width:0;overflow-wrap:anywhere;flex:1}
+  .mini-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+  .mini-inputs label{font-size:12px;color:var(--mut)}
+  .section-head{color:var(--acc);font-weight:750;margin:12px 0 8px}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .actions button{flex:1 1 145px}
+  @media(max-width:390px){.top h2{font-size:1.02rem}.top .ghost{padding:7px 5px;font-size:.85rem}.top #btnSettings{font-size:1.1rem}}
+  th,td{padding:10px;border-bottom:1px solid var(--line)}
+  .right{text-align:right}
+  .note{margin-top:10px;color:var(--mut);font-size:13px}
+  .finalize-row{display:flex;justify-content:center;margin-top:14px;margin-bottom:6px}
+
+  /* FAB flotante “Ver carrito” */
+  .fab{
+    position:fixed; right:16px; bottom:16px;
+    background:linear-gradient(135deg,#22c55e,#16a34a);
+    color:#04120a; border:none; font-weight:900;
+    padding:12px 16px; border-radius:999px;
+    box-shadow:0 8px 24px rgba(34,197,94,.25);
+  }
+  .fab-count{
+    font-weight:700;
+    margin-left:4px;
+    color:#000; /* ← ahora negro visible */
+  }
+
+  #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(10px);
+         background:#111827;color:#e5eef0;border:1px solid #374151;border-radius:12px;
+         padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.35);
+         opacity:0;pointer-events:none;z-index:50;transition:opacity .25s ease, transform .25s ease}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .over-txt{color:var(--danger)!important}
+  .over-chip{background:rgba(239,68,68,.14); border:1px solid rgba(239,68,68,.35)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <button id="btnBack" class="back hidden">← Volver</button>
+    <h2 id="title">🛒 Compra del Súper</h2>
+    <span style="flex:1"></span>
+    <button id="btnHistory" class="ghost">📜 Historial</button>
+    <button id="btnSettings" class="ghost" aria-label="Configuración" title="Configuración">⚙️</button>
+  </div>
+
+  <section id="view-form" class="card">
+    <div class="actions"><button id="openPrepare" class="pill">📝 Preparar compra</button><button id="openFavorites" class="pill">⭐ Habituales</button></div>
+    <div class="row">
+      <input id="prod" placeholder="Producto" autocapitalize="sentences">
+      <input id="precio" type="number" placeholder="Precio/U (CLP)">
+      <input id="cant" type="number" placeholder="Cantidad" step="0.01">
+      <button id="add" class="ok">Agregar</button>
+      <div class="total-inline">Total:
+        <span id="totalInline" class="total-badge">$0</span>
+      </div>
+    </div>
+
+    <div class="budget-line">
+      <div class="money">
+        <span class="prefix">$</span>
+        <input id="budget" type="text" inputmode="numeric" placeholder="">
+      </div>
+      <button id="saveBudget" class="ghost">Guardar</button>
+      <div id="overMsg" class="over" hidden>Te pasaste: <b id="overAmount">$0</b></div>
+    </div>
+
+    <div id="finalizeMain" class="finalize-row hidden">
+      <button id="checkoutMain" class="ok" style="max-width:280px">💳 Finalizar compra</button>
+    </div>
+
+    <div class="note">* Puede variar en caja por ofertas y promociones.</div>
+  </section>
+
+  <section id="view-prepare" class="card hidden">
+    <div class="section-head">📝 Preparar compra</div>
+    <div class="note">Revisa tu despensa. Agrega solo nombres: los precios y las cantidades se ingresan cuando recojas cada producto.</div>
+    <div class="actions"><button id="chooseFavorites" class="pill">⭐ Elegir habituales</button><button id="goShoppingPrepare" class="pill">🛒 Ir a comprar</button></div>
+    <div class="mini-inputs" style="grid-template-columns:1fr auto;align-items:end">
+      <div><label for="prepName">Agregar producto a la lista</label><input id="prepName" placeholder="Ej.: Arroz" autocapitalize="sentences"></div>
+      <button id="addPrep" class="pill">Agregar</button>
+    </div>
+    <div class="section-head">Pendientes para esta compra (<span id="prepCount">0</span>)</div>
+    <div id="prepItems"></div>
+  </section>
+
+  <section id="view-favorites" class="card hidden">
+    <div class="section-head">⭐ Mis productos habituales</div>
+    <div class="note">Marca lo que falta en casa. Lo que no marques no se agregará a la compra.</div>
+    <div class="actions"><button id="favAll" class="pill">Seleccionar todos</button><button id="favNone" class="pill">Desmarcar todos</button></div>
+    <div id="favoriteItems"></div>
+    <div class="actions"><button id="addSelectedFav" class="ok">Agregar seleccionados a la lista</button></div>
+  </section>
+
+  <section id="view-cart" class="card hidden">
+    <div style="color:#94a3b8;margin-bottom:6px">🧺 Carrito</div>
+    <div id="pendingShopping">
+      <div class="section-head">📝 Pendientes (<span id="pendingCount">0</span>)</div>
+      <div id="pendingItems"></div>
+    </div>
+    <div class="section-head">✅ En el carro físico</div>
+    <div class="table-wrap"><table class="cart-table">
+      <thead><tr><th>Producto</th><th class="right">Precio/U</th><th class="right">Cant</th><th class="right">Total</th><th></th></tr></thead>
+      <tbody id="cartBody"></tbody>
+    </table></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px;flex-wrap:wrap">
+      <button id="checkout" class="ghost">💳 Finalizar compra</button>
+      <div style="font-weight:800">Total:
+        <span id="cartTotal" class="total-badge">$0</span>
+      </div>
+    </div>
+    <div class="note">* Puede variar en caja por ofertas y promociones.</div>
+  </section>
+
+  <section id="view-settings" class="card hidden">
+    <div style="color:#94a3b8;margin-bottom:6px">⚙️ Configuración</div>
+    <div>Presupuesto (CLP): <input id="cfgBudget" type="number" style="max-width:200px"> <button id="saveBudgetCfg" class="ghost">Guardar</button></div>
+    <div class="note">Los datos se guardan en este dispositivo. Exporta un respaldo de vez en cuando.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button id="exportData" class="ghost">⬇️ Exportar respaldo</button><button id="importData" class="ghost">⬆️ Importar respaldo</button><input id="importFile" class="hidden" type="file" accept=".json,application/json"></div>
+  </section>
+
+  <section id="view-history" class="card hidden">
+    <div style="color:#94a3b8;margin-bottom:6px">📜 Historial</div>
+    <div id="histList" style="margin-top:8px;color:#94a3b8">Aún no hay compras.</div>
+  </section>
+</div>
+
+<button id="openCart" class="fab">🛒 Ver carrito<span id="cartCount" class="fab-count">(0)</span></button>
+<div id="toast"></div>
+
+<script>
+const CART_KEY='carrito_v1', HISTORY_KEY='carrito_historial_v2';
+const PENDING_KEY='carrito_pendientes_v3',FAV_KEY='carrito_habituales_v3';
+const read=(key,fallback)=>{try{let v=JSON.parse(localStorage.getItem(key));return Array.isArray(v)?v:fallback;}catch{return fallback;}};
+let data=read(CART_KEY,[]),history=read(HISTORY_KEY,[]),pending=read(PENDING_KEY,[]),favorites=read(FAV_KEY,[]);
+let chosenFavorites=new Set(),openPending=-1,fromFavorites='view-prepare';
+const $=id=>document.getElementById(id);
+const CLP=n=>new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(n||0);
+const DEC=n=>new Intl.NumberFormat('es-CL',{maximumFractionDigits:0}).format(n||0);
+const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s).trim().toLocaleLowerCase('es-CL');
+const titleName=s=>{let a=String(s).trim().replace(/\s+/g,' ');return a?a[0].toLocaleUpperCase('es-CL')+a.slice(1):'';};
+const money=n=>Number.isFinite(Number(n))?Math.max(0,Number(n)):0;
+function toast(m,ms=1700){let t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),ms);}
+function saveCart(){localStorage.setItem(CART_KEY,JSON.stringify(data));}
+function saveLists(){localStorage.setItem(PENDING_KEY,JSON.stringify(pending));localStorage.setItem(FAV_KEY,JSON.stringify(favorites));}
+function getBudget(){return Number(localStorage.getItem('budget_value')||0);}
+function setBudget(v){localStorage.setItem('budget_value',v||0);}
+function parseBudgetInput(){return Number(($('budget').value||'').replace(/\./g,''))||0;}
+function paintBudgetInput(v){$('budget').value=v?DEC(v):'';}
+function updateFavorite(p,u,q){let existing=favorites.find(x=>norm(x.p)===norm(p));if(existing){existing.u=u;existing.q=q;}else favorites.push({p,u,q});}
+function recalc(){
+ $('cartBody').innerHTML=data.length?data.map((x,i)=>`<tr><td>${escapeHtml(x.p)}</td><td class="right"><button class="tap-number" data-edit="price" data-i="${i}" aria-label="Editar precio de ${escapeHtml(x.p)}">${CLP(x.u)}</button></td><td class="right"><button class="tap-number" data-edit="qty" data-i="${i}" aria-label="Editar cantidad de ${escapeHtml(x.p)}">${x.q}</button></td><td class="right">${CLP(x.u*x.q)}</td><td class="right"><button data-del="${i}" class="ghost" aria-label="Eliminar ${escapeHtml(x.p)}">🗑</button></td></tr>`).join(''):`<tr><td colspan="5" style="color:#94a3b8">Carrito vacío</td></tr>`;
+ const sum=data.reduce((a,x)=>a+Number(x.u)*Number(x.q),0);
+ $('cartTotal').textContent=CLP(sum);$('totalInline').textContent=CLP(sum);
+ $('finalizeMain').classList.toggle('hidden',!data.length);
+ const budget=getBudget();paintBudgetInput(budget);const over=sum-budget,overNow=budget>0&&over>0;
+ $('overMsg').hidden=!overNow;if(overNow)$('overAmount').textContent=CLP(over);
+ ['cartTotal','totalInline'].forEach(id=>{$(id).classList.toggle('over-txt',overNow);$(id).classList.toggle('over-chip',overNow);});
+ $('cartCount').textContent=`(${data.length})`;paintPending();
+}
+function addItem(){
+ let p=titleName($('prod').value),u=+$('precio').value,q=+$('cant').value;
+ if(!p||!(u>0)||!(q>0))return toast('Completa los campos');
+ data.push({p,u,q});$('prod').value='';$('precio').value='';$('cant').value='';saveCart();recalc();toast('✅ Agregado');
+}
+function addPending(name){const p=titleName(name);if(!p)return false;
+ if(pending.some(x=>norm(x)===norm(p))||data.some(x=>norm(x.p)===norm(p))){toast('Ya está en tu lista o carrito');return false;}
+ pending.push(p);saveLists();paintPending();return true;
+}
+function paintPending(){
+ const rows=pending.map((p,i)=>`<div class="small-row"><span class="name">${escapeHtml(p)}</span><button class="pill" data-pick="${i}">🛒 Recoger</button><button class="ghost" data-pdel="${i}" aria-label="Quitar ${escapeHtml(p)}">🗑</button></div>${openPending===i?`<div class="mini-inputs"><div><label for="pickPrice">Precio unitario ($)</label><input id="pickPrice" type="number" min="1" inputmode="numeric" placeholder="Precio real"></div><div><label for="pickQty">Cantidad</label><input id="pickQty" type="number" min="0.01" step="0.01" inputmode="decimal" value="1"></div></div><button id="confirmPick" class="ok">✅ Agregar al carro</button><div style="height:8px"></div>`:''}`).join('');
+ $('prepItems').innerHTML=pending.map((p,i)=>`<div class="small-row"><span class="name">${escapeHtml(p)}</span><button class="ghost" data-pdel="${i}" aria-label="Quitar ${escapeHtml(p)}">🗑</button></div>`).join('')||'<div class="note">Tu lista está vacía. Escribe el primer producto.</div>';
+ $('pendingItems').innerHTML=rows||'<div class="note">No quedan productos pendientes.</div>';
+ $('prepCount').textContent=pending.length;$('pendingCount').textContent=pending.length;
+ if(openPending>=0){let f=favorites.find(x=>norm(x.p)===norm(pending[openPending]));if(f){$('pickPrice').value=f.u||'';$('pickQty').value=1;}}
+}
+function paintFavorites(){
+ $('favoriteItems').innerHTML=favorites.length?favorites.map((x,i)=>`<div class="small-row"><label class="name"><input type="checkbox" data-fav="${i}" ${chosenFavorites.has(i)?'checked':''} style="width:auto;margin-right:8px">${escapeHtml(x.p)}</label><button class="ghost" data-fdel="${i}" aria-label="Quitar ${escapeHtml(x.p)} de habituales">🗑</button></div>`).join(''):'<div class="note">Todavía no hay productos habituales. Se crearán al finalizar tu primera compra.</div>';
+}
+function collectPending(){if(openPending<0||!pending[openPending])return;let u=Number($('pickPrice').value),q=Number($('pickQty').value);
+ if(!(u>0)||!(q>0))return toast('Indica precio y cantidad');
+ const p=pending.splice(openPending,1)[0];data.push({p,u,q});openPending=-1;saveCart();saveLists();recalc();toast('✅ Agregado al carro');
+}
+function delItem(i){data.splice(i,1);saveCart();recalc();}
+function editItem(i,kind){let x=data[i];if(!x)return;const isPrice=kind==='price';let old=isPrice?x.u:x.q;
+ const raw=prompt(isPrice?`Nuevo precio unitario de ${x.p}:`:`Nueva cantidad de ${x.p}:`,String(old));
+ if(raw===null)return;let n=Number(raw.replace(',','.').trim());if(!(n>0))return toast('Ingresa un número mayor que cero');
+ if(isPrice)x.u=n;else x.q=n;saveCart();recalc();toast('✅ Actualizado');
+}
+function checkout(){
+ if(!data.length)return toast('El carrito está vacío');
+ if(pending.length&&!confirm(`Quedan ${pending.length} productos pendientes. ¿Finalizar solo con los recogidos?`))return;
+ let items=data.map(x=>({...x})),total=items.reduce((a,x)=>a+x.u*x.q,0);
+ history.unshift({date:new Date().toISOString(),items,total});
+ items.forEach(x=>updateFavorite(x.p,x.u,x.q));chosenFavorites.clear();
+ localStorage.setItem(HISTORY_KEY,JSON.stringify(history));data=[];pending=[];openPending=-1;setBudget(0);saveCart();saveLists();$('cfgBudget').value='';
+ recalc();paintHistory();paintFavorites();toast('💳 Compra guardada y finalizada',2200);show('view-form');
+}
+function paintHistory(){
+ $('histList').innerHTML=history.length?history.map((h,i)=>{let dt=new Date(h.date);return `<details style="margin:8px 0;padding:10px;border:1px solid var(--line);border-radius:10px"><summary style="cursor:pointer;color:var(--ink)">${escapeHtml(isNaN(dt)?'Sin fecha':dt.toLocaleString('es-CL'))} — <strong>${CLP(h.total)}</strong> (${h.items.length} productos)</summary><div style="margin-top:8px">${h.items.map(x=>`<div style="padding:4px 0;color:var(--mut)">${escapeHtml(x.p)} · ${x.q} × ${CLP(x.u)} = ${CLP(x.q*x.u)}</div>`).join('')}<button class="ghost" data-hdel="${i}" style="margin-top:10px">🗑 Eliminar esta compra</button></div></details>`;}).join(''):'Aún no hay compras.';
+}
+function exportBackup(){
+ const contents=JSON.stringify({version:3,exportedAt:new Date().toISOString(),cart:data,budget:getBudget(),history,pending,favorites},null,2);
+ const url=URL.createObjectURL(new Blob([contents],{type:'application/json'}));let a=document.createElement('a');a.href=url;a.download='respaldo_carrito_'+new Date().toISOString().slice(0,10)+'.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function importBackup(file){
+ if(!file)return;try{
+ let obj=JSON.parse(await file.text());
+ if(!obj||!Array.isArray(obj.cart)||!Array.isArray(obj.history)||!Number.isFinite(Number(obj.budget)))throw Error('Formato incorrecto');
+ let validItem=x=>x&&typeof x.p==='string'&&Number.isFinite(Number(x.u))&&Number(x.u)>0&&Number.isFinite(Number(x.q))&&Number(x.q)>0;
+ if(!obj.cart.every(validItem)||!obj.history.every(h=>h&&typeof h.date==='string'&&Array.isArray(h.items)&&h.items.every(validItem)))throw Error('Datos inválidos');
+ if(obj.pending!==undefined&&(!Array.isArray(obj.pending)||!obj.pending.every(x=>typeof x==='string')))throw Error('Lista inválida');
+ if(obj.favorites!==undefined&&(!Array.isArray(obj.favorites)||!obj.favorites.every(validItem)))throw Error('Habituales inválidos');
+ if(!confirm('¿Reemplazar los datos actuales por este respaldo?'))return;
+ data=obj.cart;history=obj.history;pending=obj.pending||[];favorites=obj.favorites||[];openPending=-1;chosenFavorites.clear();
+ setBudget(Number(obj.budget));saveCart();saveLists();localStorage.setItem(HISTORY_KEY,JSON.stringify(history));
+ recalc();paintHistory();paintFavorites();$('cfgBudget').value=getBudget()||'';toast('✅ Respaldo importado');
+ }catch(e){alert('No se pudo importar: '+e.message)}finally{$('importFile').value='';}
+}
+function show(id){
+ ['view-form','view-cart','view-settings','view-history','view-prepare','view-favorites'].forEach(k=>$(k).classList.add('hidden'));
+ $(id).classList.remove('hidden');$('btnBack').classList.toggle('hidden',id==='view-form');
+ $('btnBack').textContent=id==='view-cart'?'← Seguir comprando':'← Volver';
+ $('openCart').classList.toggle('hidden',id==='view-cart');
+ if(id==='view-favorites')paintFavorites();if(id==='view-prepare'||id==='view-cart')paintPending();
+}
+$('add').onclick=addItem;$('openCart').onclick=()=>show('view-cart');
+$('openPrepare').onclick=()=>show('view-prepare');$('openFavorites').onclick=()=>{fromFavorites='view-form';show('view-favorites');};
+$('chooseFavorites').onclick=()=>{fromFavorites='view-prepare';show('view-favorites');};
+$('goShoppingPrepare').onclick=()=>show('view-cart');
+$('addPrep').onclick=()=>{if(addPending($('prepName').value)){$('prepName').value='';$('prepName').focus();}};
+$('prepName').onkeydown=e=>{if(e.key==='Enter')$('addPrep').click();};
+$('btnSettings').onclick=()=>show('view-settings');$('btnHistory').onclick=()=>{paintHistory();show('view-history');};
+$('btnBack').onclick=()=>show('view-form');
+$('cartBody').onclick=e=>{let b=e.target.closest('button');if(!b)return;if(b.dataset.del!==undefined)delItem(+b.dataset.del);if(b.dataset.edit)editItem(+b.dataset.i,b.dataset.edit);};
+function handlePending(e){let b=e.target.closest('button');if(!b)return;
+ if(b.dataset.pdel!==undefined){let i=+b.dataset.pdel;pending.splice(i,1);if(openPending===i)openPending=-1;else if(openPending>i)openPending--;saveLists();paintPending();}
+ if(b.dataset.pick!==undefined){let i=+b.dataset.pick;openPending=openPending===i?-1:i;paintPending();if(openPending>=0)$('pickPrice')?.focus();}
+ if(b.id==='confirmPick')collectPending();
+}
+$('prepItems').onclick=handlePending;$('pendingItems').onclick=handlePending;
+$('favoriteItems').onchange=e=>{let el=e.target.closest('[data-fav]');if(!el)return;let i=+el.dataset.fav;if(el.checked)chosenFavorites.add(i);else chosenFavorites.delete(i);};
+$('favoriteItems').onclick=e=>{let b=e.target.closest('[data-fdel]');if(!b)return;let i=+b.dataset.fdel;if(confirm(`¿Quitar ${favorites[i].p} de habituales?`)){favorites.splice(i,1);chosenFavorites.clear();saveLists();paintFavorites();}};
+$('favAll').onclick=()=>{chosenFavorites=new Set(favorites.map((_,i)=>i));paintFavorites();};
+$('favNone').onclick=()=>{chosenFavorites.clear();paintFavorites();};
+$('addSelectedFav').onclick=()=>{let added=0;[...chosenFavorites].sort((a,b)=>a-b).forEach(i=>{if(favorites[i])added+=Number(addPending(favorites[i].p));});chosenFavorites.clear();show('view-prepare');toast(added?`✅ ${added} productos a tu lista`:'No se agregaron productos');};
+$('histList').onclick=e=>{let b=e.target.closest('[data-hdel]');if(!b)return;let i=+b.dataset.hdel;if(confirm('¿Eliminar esta compra del historial? No se puede deshacer.')){history.splice(i,1);localStorage.setItem(HISTORY_KEY,JSON.stringify(history));paintHistory();}};
+$('checkout').onclick=checkout;$('checkoutMain').onclick=checkout;
+$('saveBudget').onclick=()=>{let v=parseBudgetInput();setBudget(v);paintBudgetInput(v);recalc();toast(v>0?`✅ Presupuesto: ${CLP(v)}`:'Presupuesto borrado');};
+$('saveBudgetCfg').onclick=()=>{let v=Number($('cfgBudget').value)||0;setBudget(Math.max(0,v));recalc();toast('✅ Presupuesto guardado');};
+$('exportData').onclick=exportBackup;$('importData').onclick=()=>$('importFile').click();
+$('importFile').onchange=e=>importBackup(e.target.files[0]);
+$('budget').onblur=()=>paintBudgetInput(parseBudgetInput());$('budget').onfocus=()=>$('budget').value=parseBudgetInput()||'';
+$('cfgBudget').value=getBudget()||'';recalc();paintHistory();
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>

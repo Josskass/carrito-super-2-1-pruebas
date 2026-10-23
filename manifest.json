@@ -1,0 +1,18 @@
+{
+  "name": "Compra del Súper",
+  "short_name": "Súper",
+  "description": "Carrito de compras con presupuesto e historial, sin conexión",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1622",
+  "theme_color": "#00c853",
+  "icons": [
+    {
+      "src": "./icono.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
