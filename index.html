@@ -47,6 +47,8 @@
   .cart-table th,.cart-table td{padding:7px 3px;font-size:clamp(13px,3.7vw,16px);overflow-wrap:anywhere}
   .cart-table th:first-child{width:27%}.cart-table th:nth-child(2){width:21%}.cart-table th:nth-child(3){width:12%}.cart-table th:nth-child(4){width:23%}.cart-table th:last-child{width:17%}
   .cart-table .ghost{padding:6px 3px;min-width:24px;margin:2px 0}
+  /* Flecha de devolver vectorial: visible en Android sin ensanchar columnas */
+  .cart-table .return-icon{display:block;width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;margin:auto;pointer-events:none}
   .tap-name{background:transparent;border:0;color:var(--ink);padding:5px 0;text-align:left;text-decoration:underline dotted;text-underline-offset:4px;overflow-wrap:anywhere;max-width:100%;cursor:pointer;font:inherit}
   .tap-number{border:0;background:transparent;color:var(--ink);padding:7px 0;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:4px;cursor:pointer;max-width:100%;font-size:inherit}
   /* Habituales: casillas redondas pero selección múltiple */
@@ -244,7 +246,7 @@ function parseBudgetInput(){return Number(($('budget').value||'').replace(/\./g,
 function paintBudgetInput(v){$('budget').value=v?DEC(v):'';}
 function updateFavorite(p,u,q){let existing=favorites.find(x=>norm(x.p)===norm(p));if(existing){existing.u=u;existing.q=q;}else favorites.push({p,u,q});}
 function recalc(){
- $('cartBody').innerHTML=data.length?data.map((x,i)=>`<tr><td><button class="tap-name" data-edit="name" data-i="${i}" aria-label="Editar nombre de ${escapeHtml(x.p)}">${escapeHtml(x.p)}</button></td><td class="right"><button class="tap-number" data-edit="price" data-i="${i}" aria-label="Editar precio de ${escapeHtml(x.p)}">${CLP(x.u)}</button></td><td class="right"><button class="tap-number" data-edit="qty" data-i="${i}" aria-label="Editar cantidad de ${escapeHtml(x.p)}">${x.q}</button></td><td class="right">${CLP(x.u*x.q)}</td><td class="right"><button data-return="${i}" class="ghost" title="Devolver a pendientes" aria-label="Devolver ${escapeHtml(x.p)} a pendientes">↩</button><button data-del="${i}" class="ghost" aria-label="Eliminar ${escapeHtml(x.p)}">🗑</button></td></tr>`).join(''):`<tr><td colspan="5" style="color:#94a3b8">Carrito vacío</td></tr>`;
+ $('cartBody').innerHTML=data.length?data.map((x,i)=>`<tr><td><button class="tap-name" data-edit="name" data-i="${i}" aria-label="Editar nombre de ${escapeHtml(x.p)}">${escapeHtml(x.p)}</button></td><td class="right"><button class="tap-number" data-edit="price" data-i="${i}" aria-label="Editar precio de ${escapeHtml(x.p)}">${CLP(x.u)}</button></td><td class="right"><button class="tap-number" data-edit="qty" data-i="${i}" aria-label="Editar cantidad de ${escapeHtml(x.p)}">${x.q}</button></td><td class="right">${CLP(x.u*x.q)}</td><td class="right"><button data-return="${i}" class="ghost" title="Devolver a pendientes" aria-label="Devolver ${escapeHtml(x.p)} a pendientes"><svg class="return-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button data-del="${i}" class="ghost" aria-label="Eliminar ${escapeHtml(x.p)}">🗑</button></td></tr>`).join(''):`<tr><td colspan="5" style="color:#94a3b8">Carrito vacío</td></tr>`;
  const sum=data.reduce((a,x)=>a+Number(x.u)*Number(x.q),0);
  $('cartTotal').textContent=CLP(sum);$('totalInline').textContent=CLP(sum);
  $('finalizeMain').classList.toggle('hidden',!data.length);
