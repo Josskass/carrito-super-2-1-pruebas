@@ -44,10 +44,24 @@
 
   table{width:100%;border-collapse:collapse;margin-top:8px;table-layout:fixed}
   .table-wrap{max-width:100%;overflow-x:hidden}
-  .cart-table th,.cart-table td{padding:7px 3px;font-size:clamp(10px,2.9vw,14px);overflow-wrap:anywhere}
-  .cart-table th:first-child{width:31%}.cart-table th:nth-child(2){width:20%}.cart-table th:nth-child(3){width:12%}.cart-table th:nth-child(4){width:23%}.cart-table th:last-child{width:14%}
+  .cart-table th,.cart-table td{padding:7px 3px;font-size:clamp(13px,3.7vw,16px);overflow-wrap:anywhere}
+  .cart-table th:first-child{width:27%}.cart-table th:nth-child(2){width:23%}.cart-table th:nth-child(3){width:12%}.cart-table th:nth-child(4){width:25%}.cart-table th:last-child{width:13%}
   .cart-table .ghost{padding:6px 3px;min-width:26px}
   .tap-number{border:0;background:transparent;color:var(--ink);padding:7px 0;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:4px;cursor:pointer;max-width:100%;font-size:inherit}
+  /* Habituales: casillas redondas pero selección múltiple */
+  .fav-check{appearance:none;-webkit-appearance:none;width:22px;height:22px;min-width:22px;vertical-align:middle;border:2px solid #22c55e;border-radius:50%;background:#0b1220;margin:0 10px 0 0;cursor:pointer;position:relative}
+  .fav-check:checked{background:#22c55e}
+  .fav-check:checked::after{content:'✓';position:absolute;inset:-2px 0 0;text-align:center;color:#05210e;font-size:16px;font-weight:900}
+  .fav-check:focus-visible{outline:2px solid white;outline-offset:2px}
+  .favorite-label{display:flex;align-items:center;cursor:pointer;min-height:38px}
+  /* Edición táctil, sin prompts nativos */
+  .edit-overlay{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:18px}
+  .edit-panel{background:#111827;color:var(--ink);width:min(100%,390px);border:1px solid #475569;border-radius:16px;padding:20px;box-shadow:0 16px 48px #0009}
+  .edit-panel h3{margin:0 0 12px;color:var(--acc);font-size:1.12rem}
+  .edit-panel label{display:block;margin-bottom:8px}
+  .edit-panel input{font-size:1.35rem;padding:13px}
+  .edit-buttons{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+  .edit-buttons button{min-width:100px}
   .pill{background:#0b1220;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px;cursor:pointer}
   .small-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
   .small-row .name{min-width:0;overflow-wrap:anywhere;flex:1}
@@ -100,7 +114,7 @@
     <div class="row">
       <input id="prod" placeholder="Producto" autocapitalize="sentences">
       <input id="precio" type="number" placeholder="Precio/U (CLP)">
-      <input id="cant" type="number" placeholder="Cantidad" step="0.01">
+      <input id="cant" type="number" inputmode="numeric" min="1" step="1" placeholder="Cantidad">
       <button id="add" class="ok">Agregar</button>
       <div class="total-inline">Total:
         <span id="totalInline" class="total-badge">$0</span>
@@ -178,6 +192,14 @@
 
 <button id="openCart" class="fab">🛒 Ver carrito<span id="cartCount" class="fab-count">(0)</span></button>
 <div id="toast"></div>
+<div id="editOverlay" class="edit-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+  <div class="edit-panel">
+    <h3 id="editTitle">Editar producto</h3>
+    <label id="editLabel" for="editValue">Nuevo valor</label>
+    <input id="editValue" type="text" inputmode="numeric" autocomplete="off" pattern="[0-9]*">
+    <div class="edit-buttons"><button id="cancelEdit" type="button" class="ghost">Cancelar</button><button id="saveEdit" type="button" class="ok" style="width:auto">Guardar</button></div>
+  </div>
+</div>
 
 <script>
 const CART_KEY='carrito_v1', HISTORY_KEY='carrito_historial_v2';
@@ -192,6 +214,7 @@ const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>'
 const norm=s=>String(s).trim().toLocaleLowerCase('es-CL');
 const titleName=s=>{let a=String(s).trim().replace(/\s+/g,' ');return a?a[0].toLocaleUpperCase('es-CL')+a.slice(1):'';};
 const money=n=>Number.isFinite(Number(n))?Math.max(0,Number(n)):0;
+const positiveInteger=n=>Number.isSafeInteger(n)&&n>0;
 function toast(m,ms=1700){let t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),ms);}
 function saveCart(){localStorage.setItem(CART_KEY,JSON.stringify(data));}
 function saveLists(){localStorage.setItem(PENDING_KEY,JSON.stringify(pending));localStorage.setItem(FAV_KEY,JSON.stringify(favorites));}
@@ -212,7 +235,7 @@ function recalc(){
 }
 function addItem(){
  let p=titleName($('prod').value),u=+$('precio').value,q=+$('cant').value;
- if(!p||!(u>0)||!(q>0))return toast('Completa los campos');
+ if(!p||!positiveInteger(u)||!positiveInteger(q))return toast('Precio y cantidad deben ser enteros mayores que cero');
  data.push({p,u,q});$('prod').value='';$('precio').value='';$('cant').value='';saveCart();recalc();toast('✅ Agregado');
 }
 function addPending(name){const p=titleName(name);if(!p)return false;
@@ -220,25 +243,44 @@ function addPending(name){const p=titleName(name);if(!p)return false;
  pending.push(p);saveLists();paintPending();return true;
 }
 function paintPending(){
- const rows=pending.map((p,i)=>`<div class="small-row"><span class="name">${escapeHtml(p)}</span><button class="pill" data-pick="${i}">🛒 Recoger</button><button class="ghost" data-pdel="${i}" aria-label="Quitar ${escapeHtml(p)}">🗑</button></div>${openPending===i?`<div class="mini-inputs"><div><label for="pickPrice">Precio unitario ($)</label><input id="pickPrice" type="number" min="1" inputmode="numeric" placeholder="Precio real"></div><div><label for="pickQty">Cantidad</label><input id="pickQty" type="number" min="0.01" step="0.01" inputmode="decimal" value="1"></div></div><button id="confirmPick" class="ok">✅ Agregar al carro</button><div style="height:8px"></div>`:''}`).join('');
+ const rows=pending.map((p,i)=>`<div class="small-row"><span class="name">${escapeHtml(p)}</span><button class="pill" data-pick="${i}">🛒 Recoger</button><button class="ghost" data-pdel="${i}" aria-label="Quitar ${escapeHtml(p)}">🗑</button></div>${openPending===i?`<div class="mini-inputs"><div><label for="pickPrice">Precio unitario ($)</label><input id="pickPrice" type="number" min="1" inputmode="numeric" placeholder="Precio real"></div><div><label for="pickQty">Cantidad</label><input id="pickQty" type="number" min="1" step="1" inputmode="numeric" value="1"></div></div><button id="confirmPick" class="ok">✅ Agregar al carro</button><div style="height:8px"></div>`:''}`).join('');
  $('prepItems').innerHTML=pending.map((p,i)=>`<div class="small-row"><span class="name">${escapeHtml(p)}</span><button class="ghost" data-pdel="${i}" aria-label="Quitar ${escapeHtml(p)}">🗑</button></div>`).join('')||'<div class="note">Tu lista está vacía. Escribe el primer producto.</div>';
  $('pendingItems').innerHTML=rows||'<div class="note">No quedan productos pendientes.</div>';
  $('prepCount').textContent=pending.length;$('pendingCount').textContent=pending.length;
  if(openPending>=0){let f=favorites.find(x=>norm(x.p)===norm(pending[openPending]));if(f){$('pickPrice').value=f.u||'';$('pickQty').value=1;}}
 }
 function paintFavorites(){
- $('favoriteItems').innerHTML=favorites.length?favorites.map((x,i)=>`<div class="small-row"><label class="name"><input type="checkbox" data-fav="${i}" ${chosenFavorites.has(i)?'checked':''} style="width:auto;margin-right:8px">${escapeHtml(x.p)}</label><button class="ghost" data-fdel="${i}" aria-label="Quitar ${escapeHtml(x.p)} de habituales">🗑</button></div>`).join(''):'<div class="note">Todavía no hay productos habituales. Se crearán al finalizar tu primera compra.</div>';
+ $('favoriteItems').innerHTML=favorites.length?favorites.map((x,i)=>`<div class="small-row"><label class="name favorite-label"><input type="checkbox" data-fav="${i}" ${chosenFavorites.has(i)?'checked':''} class="fav-check">${escapeHtml(x.p)}</label><button class="ghost" data-fdel="${i}" aria-label="Quitar ${escapeHtml(x.p)} de habituales">🗑</button></div>`).join(''):'<div class="note">Todavía no hay productos habituales. Se crearán al finalizar tu primera compra.</div>';
 }
 function collectPending(){if(openPending<0||!pending[openPending])return;let u=Number($('pickPrice').value),q=Number($('pickQty').value);
- if(!(u>0)||!(q>0))return toast('Indica precio y cantidad');
+ if(!positiveInteger(u)||!positiveInteger(q))return toast('Precio y cantidad deben ser enteros mayores que cero');
  const p=pending.splice(openPending,1)[0];data.push({p,u,q});openPending=-1;saveCart();saveLists();recalc();toast('✅ Agregado al carro');
 }
 function delItem(i){data.splice(i,1);saveCart();recalc();}
-function editItem(i,kind){let x=data[i];if(!x)return;const isPrice=kind==='price';let old=isPrice?x.u:x.q;
- const raw=prompt(isPrice?`Nuevo precio unitario de ${x.p}:`:`Nueva cantidad de ${x.p}:`,String(old));
- if(raw===null)return;let n=Number(raw.replace(',','.').trim());if(!(n>0))return toast('Ingresa un número mayor que cero');
- if(isPrice)x.u=n;else x.q=n;saveCart();recalc();toast('✅ Actualizado');
+let editing=null;
+function editItem(i,kind){
+ const x=data[i];if(!x)return;
+ editing={i,kind};const isPrice=kind==='price';
+ $('editTitle').textContent=isPrice?'Editar precio':'Editar cantidad';
+ $('editLabel').textContent=(isPrice?'Nuevo precio unitario de ':'Nueva cantidad de ')+x.p;
+ $('editValue').value=String(isPrice?x.u:x.q);
+ $('editOverlay').classList.remove('hidden');
+ const inp=$('editValue');inp.focus();inp.select();
+ // La selección inicial permite reemplazar el valor sin borrarlo a mano.
+ setTimeout(()=>{if(editing)inp.select()},30);
 }
+function closeEdit(){$('editOverlay').classList.add('hidden');editing=null;}
+function saveEdit(){
+ if(!editing)return;
+ const n=Number($('editValue').value.trim());
+ if(!positiveInteger(n))return toast('Ingresa un número entero mayor que cero');
+ const {i,kind}=editing;if(!data[i])return closeEdit();
+ if(kind==='price')data[i].u=n;else data[i].q=n;
+ saveCart();recalc();closeEdit();toast('✅ Actualizado');
+}
+$('cancelEdit').onclick=closeEdit;$('saveEdit').onclick=saveEdit;
+$('editValue').onkeydown=e=>{if(e.key==='Enter')saveEdit();else if(e.key==='Escape')closeEdit();};
+$('editOverlay').onclick=e=>{if(e.target===$('editOverlay'))closeEdit();};
 function checkout(){
  if(!data.length)return toast('El carrito está vacío');
  if(pending.length&&!confirm(`Quedan ${pending.length} productos pendientes. ¿Finalizar solo con los recogidos?`))return;

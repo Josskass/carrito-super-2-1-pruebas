@@ -1,9 +1,1 @@
-CARrito del Súper 2.1 — VERSIÓN DE PRUEBAS
-
-No subir a GitHub todavía.
-
-Incluye: lista de compra previa; catálogo de habituales creado al finalizar compras; productos pendientes; edición de cantidad/precio; presupuesto reiniciado al finalizar; eliminación individual de historial; respaldo v3 retrocompatible con v2; ajustes de diseño móvil.
-
-Para pruebas PWA offline se requiere HTTPS (GitHub Pages de prueba) o localhost. Abrir el archivo index.html local permite probar la interfaz, pero no el service worker.
-
-Conservar el respaldo de la versión 2.0.
+Carrito del Súper 2.1 — ajustes de prueba. Casillas circulares, edición numérica táctil, cantidades enteras, legibilidad mejorada solamente en tabla de Ver carrito, icono sin fondo blanco y maskable. Mantener la versión 2.0 intacta. Probar en Samsung antes de publicar la actualización definitiva.
