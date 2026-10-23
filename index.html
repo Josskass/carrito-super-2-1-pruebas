@@ -182,7 +182,7 @@
     <div style="color:#94a3b8;margin-bottom:6px">⚙️ Configuración</div>
     <div>Presupuesto (CLP): <input id="cfgBudget" type="number" style="max-width:200px"> <button id="saveBudgetCfg" class="ghost">Guardar</button></div>
     <div class="note">Los datos se guardan en este dispositivo. Exporta un respaldo de vez en cuando.</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button id="exportData" class="ghost">⬇️ Descargar respaldo</button><button id="shareBackup" class="ghost">☁️ Guardar en Drive</button><button id="importData" class="ghost">⬆️ Importar respaldo</button><input id="importFile" class="hidden" type="file" accept=".json,application/json"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button id="exportData" class="ghost">⬇️ Descargar respaldo</button><button id="shareBackup" class="ghost">☁️ Compartir a Drive</button><button id="importData" class="ghost">⬆️ Importar respaldo</button><input id="importFile" class="hidden" type="file" accept=".json,.txt,application/json,text/plain"></div>
   </section>
 
   <section id="view-history" class="card hidden">
@@ -305,13 +305,19 @@ function exportBackup(){
  a.href=url;a.download=file.name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 async function shareBackup(){
- const file=makeBackupFile();
+ // Chromium puede bloquear los archivos .json al compartirlos.
+ // La copia compartida usa .txt (contenido JSON sin cambios) para
+ // permitir enviarla a Drive. Importar admite ambos formatos.
+ const original=makeBackupFile();
+ const name=original.name.replace(/\.json$/i,'.txt');
+ const file=new File([original],name,{type:'text/plain'});
  if(!navigator.share || !navigator.canShare || !navigator.canShare({files:[file]})){
-  alert('Este navegador no permite compartir directamente el respaldo. Usa «Descargar respaldo» para guardarlo y compartirlo desde Chrome.');return;
+  alert('Este navegador no permite compartir el respaldo como archivo. Usa «Descargar respaldo» y compártelo desde las descargas de Chrome.');return;
  }
  try { await navigator.share({files:[file],title:'Respaldo Carrito del Súper'}); }
- catch(e){if(e.name!=='AbortError')alert('No fue posible compartir el respaldo: '+e.message);}
+ catch(e){if(e.name!=='AbortError')alert('No fue posible compartir el respaldo: '+e.message+'. Puedes usar «Descargar respaldo».');}
 }
+
 async function importBackup(file){
  if(!file)return;try{
  let obj=JSON.parse(await file.text());
