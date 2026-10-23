@@ -1,6 +1,6 @@
 // Carrito 2.1: version de pruebas independiente; nunca borrar caches de otras apps.
 const PREFIX = 'carrito21-pruebas-';
-const CACHE = PREFIX + 'v9-share-text-20261023';
+const CACHE = PREFIX + 'v10-share-nombre-20261023';
 const SCOPE = new URL(self.registration.scope);
 const HOME = new URL('./index.html', SCOPE).href;
 const ASSETS = ['./manifest.json', './icono.png', './icono-maskable.png'];

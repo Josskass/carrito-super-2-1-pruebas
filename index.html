@@ -314,7 +314,7 @@ async function shareBackup(){
  if(!navigator.share || !navigator.canShare || !navigator.canShare({files:[file]})){
   alert('Este navegador no permite compartir el respaldo como archivo. Usa «Descargar respaldo» y compártelo desde las descargas de Chrome.');return;
  }
- try { await navigator.share({files:[file],title:'Respaldo Carrito del Súper'}); }
+ try { await navigator.share({files:[file],title:name}); }
  catch(e){if(e.name!=='AbortError')alert('No fue posible compartir el respaldo: '+e.message+'. Puedes usar «Descargar respaldo».');}
 }
 
