@@ -346,7 +346,17 @@ $('exportData').onclick=exportBackup;$('importData').onclick=()=>$('importFile')
 $('importFile').onchange=e=>importBackup(e.target.files[0]);
 $('budget').onblur=()=>paintBudgetInput(parseBudgetInput());$('budget').onfocus=()=>$('budget').value=parseBudgetInput()||'';
 $('cfgBudget').value=getBudget()||'';recalc();paintHistory();
-if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')) {
+  // Solicitar actualizacion del worker en cada apertura online.
+  // Recargar UNA sola vez cuando la nueva version tome control.
+  let refreshed = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshed && navigator.onLine) { refreshed = true; location.reload(); }
+  });
+  navigator.serviceWorker.register('./sw.js', {updateViaCache:'none'})
+    .then(reg => { if (navigator.onLine) reg.update().catch(()=>{}); })
+    .catch(()=>{});
+}
 </script>
 </body>
 </html>
