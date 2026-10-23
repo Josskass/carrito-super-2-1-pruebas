@@ -1,1 +1,3 @@
-Carrito del Súper 2.1 — ajustes de prueba. Casillas circulares, edición numérica táctil, cantidades enteras, legibilidad mejorada solamente en tabla de Ver carrito, icono sin fondo blanco y maskable. Mantener la versión 2.0 intacta. Probar en Samsung antes de publicar la actualización definitiva.
+Carrito del Super 2.1 - prueba con tres retoques finales. Cambios: 1) nombres de respaldos JSON con fecha y hora local (hasta segundos); 2) icono del boton Ver carrito en negro con SVG; 3) texto del boton levemente mas grande. No cambia datos ni funcionalidades. Prueba primero en el repositorio 2.1 de pruebas. No reemplazar version 2.0 todavia.
+
+Nuevo boton «Guardar en Drive»: abre el menu de compartir de Android para elegir Drive. No sube automaticamente y necesita un navegador compatible y conexion para completar la subida.
