@@ -202,8 +202,8 @@
 </div>
 
 <script>
-const CART_KEY='carrito_v1', HISTORY_KEY='carrito_historial_v2';
-const PENDING_KEY='carrito_pendientes_v3',FAV_KEY='carrito_habituales_v3';
+const CART_KEY='carrito21_pruebas_cart_v1', HISTORY_KEY='carrito21_pruebas_history_v1';
+const PENDING_KEY='carrito21_pruebas_pending_v1',FAV_KEY='carrito21_pruebas_favorites_v1', BUDGET_KEY='carrito21_pruebas_budget_v1';
 const read=(key,fallback)=>{try{let v=JSON.parse(localStorage.getItem(key));return Array.isArray(v)?v:fallback;}catch{return fallback;}};
 let data=read(CART_KEY,[]),history=read(HISTORY_KEY,[]),pending=read(PENDING_KEY,[]),favorites=read(FAV_KEY,[]);
 let chosenFavorites=new Set(),openPending=-1,fromFavorites='view-prepare';
@@ -218,8 +218,8 @@ const positiveInteger=n=>Number.isSafeInteger(n)&&n>0;
 function toast(m,ms=1700){let t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),ms);}
 function saveCart(){localStorage.setItem(CART_KEY,JSON.stringify(data));}
 function saveLists(){localStorage.setItem(PENDING_KEY,JSON.stringify(pending));localStorage.setItem(FAV_KEY,JSON.stringify(favorites));}
-function getBudget(){return Number(localStorage.getItem('budget_value')||0);}
-function setBudget(v){localStorage.setItem('budget_value',v||0);}
+function getBudget(){return Number(localStorage.getItem(BUDGET_KEY)||0);}
+function setBudget(v){localStorage.setItem(BUDGET_KEY,v||0);}
 function parseBudgetInput(){return Number(($('budget').value||'').replace(/\./g,''))||0;}
 function paintBudgetInput(v){$('budget').value=v?DEC(v):'';}
 function updateFavorite(p,u,q){let existing=favorites.find(x=>norm(x.p)===norm(p));if(existing){existing.u=u;existing.q=q;}else favorites.push({p,u,q});}
